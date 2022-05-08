@@ -12,8 +12,7 @@ HW1
 ```
 
 ## 执行
-
 ```shell
-make build
-./hw1 
+make run
 ```
+运行端口为：8080
