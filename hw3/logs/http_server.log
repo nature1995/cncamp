@@ -1,4 +1,0 @@
-{"level":"info","ts":1655048410.308745,"caller":"httpserver/httpserver.go:23","msg":"[HTTP] http server listen: 8080"}
-{"level":"info","ts":1655048419.855946,"caller":"cmd/main.go:43","msg":"Gracefully terminating..."}
-{"level":"error","ts":1655048419.857655,"caller":"cmd/main.go:34","msg":"http: Server closed","stacktrace":"main.main.func1\n\t/Users/naturegong/Study/cncamp/hw3/cmd/main.go:34"}
-{"level":"info","ts":1655048419.858887,"caller":"cmd/main.go:54","msg":"Gracefully Shutting down successfully"}
