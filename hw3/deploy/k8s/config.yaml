@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: http-server-config
+data:
+  config: |
+    Env: dev
+    Http: 8080
+    Log:
+      Path: ./logs
+      Level: DEBUG

@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: http-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: http-server
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 5
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '8080'
+      labels:
+        app: http-server
+    spec:
+      containers:
+        - name: http-server
+          image: naturegong/http_server
+          ports:
+            - containerPort: 8080
+          lifecycle:
+            postStart:
+              exec:
+                command: ['/bin/sh', '-c', 'echo http-server Start...']
+          readinessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+          envFrom:
+            - configMapRef:
+                name: http-server-config
+          volumeMounts:
+            - name: log-storage
+              mountPath: /logs
+      volumes:
+        - name: log-storage
+          emptyDir:
+            sizeLimit: 40Mi
