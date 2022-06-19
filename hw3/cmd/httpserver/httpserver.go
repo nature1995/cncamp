@@ -9,7 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"hw1/internal/logger"
+	"hw3/internal/logger"
 )
 
 func NewHttpServer(addr string) *http.Server {

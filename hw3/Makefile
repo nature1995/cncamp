@@ -33,9 +33,19 @@ deployment:
 	@kubectl apply -f ./deploy/k8s/config.yaml
 	@kubectl apply -f ./deploy/k8s/deployment.yaml
 	@kubectl apply -f ./deploy/k8s/service.yaml
+	@kubectl apply -f ./deploy/k8s/ingress.yaml
+
+deployment-hpa:
+	@echo ">> deploy hpa to kubernetes"
+	@kubectl apply -f ./deploy/k8s/workload.yaml
 
 delete:
 	@echo ">> delete from kubernetes"
+	@kubectl delete -f ./deploy/k8s/ingress.yaml
 	@kubectl delete -f ./deploy/k8s/service.yaml
 	@kubectl delete -f ./deploy/k8s/deployment.yaml
 	@kubectl delete -f ./deploy/k8s/config.yaml
+
+delete-hpa:
+	@echo ">> delete from kubernetes"
+	@kubectl delete -f ./deploy/k8s/workload.yaml

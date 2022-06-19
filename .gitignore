@@ -6,3 +6,5 @@ coverage-report.html
 coverage-report.out
 
 *.log
+
+.vscode/

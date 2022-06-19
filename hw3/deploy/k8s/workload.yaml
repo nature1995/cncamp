@@ -1,0 +1,119 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: http-server-config
+data:
+  config: |
+    Env: dev
+    Http: 8080
+    Log:
+      Path: ./logs
+      Level: DEBUG
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: http-server-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: http-server
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        app: http-server
+    spec:
+      containers:
+        - name: http-server
+          image: naturegong/http_server
+          ports:
+            - containerPort: 8080
+          lifecycle:
+            postStart:
+              exec:
+                command: ['/bin/sh', '-c', 'echo http-server Start...']
+          readinessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+          envFrom:
+            - configMapRef:
+                name: http-server-config
+          volumeMounts:
+            - name: log-storage
+              mountPath: /logs
+      volumes:
+        - name: log-storage
+          emptyDir:
+            sizeLimit: 40Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: http-server-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: http-server
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: http-server-ingress
+  annotations:
+    kubernetes.io/ingress.allow-http: 'false'
+spec:
+  tls:
+    - hosts:
+        - naturegong.com
+      secretName: http-server-tls-secret
+  rules:
+    - host: naturegong.com
+      http:
+        paths:
+          - path: "/"
+            pathType: Prefix
+            backend:
+              service:
+                name: http-server-service
+                port:
+                  number: 8080
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: http-server-tls-secret
+type: kubernetes.io/tls
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUNyakNDQVpZQ0NRQ290NjdoM3hpcUVqQU5CZ2txaGtpRzl3MEJBUXNGQURBWk1SY3dGUVlEVlFRRERBNXUKWVhSMWNtVm5iMjVuTG1OdmJUQWVGdzB5TWpBMk1Ua3hNak15TXpsYUZ3MHlNekEyTVRreE1qTXlNemxhTUJreApGekFWQmdOVkJBTU1EbTVoZEhWeVpXZHZibWN1WTI5dE1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBCk1JSUJDZ0tDQVFFQXpZb3FkSHVrd2R2REtQL290WXIySTBrR2c2WW56Z1ZLb1kvNmtCWTd2S3F4WnNkaVJtbHYKL2N6V0Eyc0w5WTkrOGVEdXVCMTQ2L2FYTHdQVzVyOGp3YUtFeGtER0ZoNjZpNElBcG8yNldrQnZYN2ZBTmcxVQpnbVIxWis4d2tvdy8vbjlJMDhaSmpyajgxU2VTQjY4VFR3czQwU1RnS3Z4QUVMOGliYllRelFsK21GWW1oZk9WCngyaFEvQ1A0RUlBbzRDcUdXMzE0aFFKSWc1T2FOVERLZlhpUUFUSmNPOU50U3F0QlJsMW4yUEIrWXlKeVgzbXEKMmdab2ZOamZhZ0kvWXZlZHlDN1ZrT3RzMjNtM09xaENJMG9nU3VHM3E5OXdxRGZaeVJSaUxHcGZDTEJtL2wzQQpPZWwrcEczR05PdVhveFRhMjRNME9zT3ZNVzk1aGYwbkZRSURBUUFCTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCCkFRQzdiS1NnaGtZc1locXNLUWVPWWd0cUJQUHQrQ2VMSlNNdXFYUVg1eG1NVnUrWTZnYXhSMzAyT2lnK3UvMmEKS3lWaXFETU5acGp2QzRQNDc1LzQyWUhzelhscnhvVnJ4cDE1R2VXNHozTmxwMm5LTk5pdFAwZFp1Y05iZVM2KwptS1VCVmVBV0oyV1gwSHVrNFJvSkdRRUhxN1k1TGxpSm9NeGMrQXpmWlo5RVhvVnpRdXdCeVpreERNck9pSGx2CjVoWUMydWFoUmJkeURNSEZXcjl0aEZLdHpreTEvcnpMZG44QWtZOVF5SkJTWDd0WENQVHlFOEVJbTliaUlteXgKWGhPblI4U2JoMXdVQXNKWktueUI2c1o3QkJFUlBWM3FOYmdTdzRXUTJ5SzlIQVBBMWtFc1htbTFmV2VJSE5mVApEa09uMktQcWIxMnNqdUtHZEJUb1I1REwKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+  tls.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBellvcWRIdWt3ZHZES1Avb3RZcjJJMGtHZzZZbnpnVktvWS82a0JZN3ZLcXhac2RpClJtbHYvY3pXQTJzTDlZOSs4ZUR1dUIxNDYvYVhMd1BXNXI4andhS0V4a0RHRmg2Nmk0SUFwbzI2V2tCdlg3ZkEKTmcxVWdtUjFaKzh3a293Ly9uOUkwOFpKanJqODFTZVNCNjhUVHdzNDBTVGdLdnhBRUw4aWJiWVF6UWwrbUZZbQpoZk9WeDJoUS9DUDRFSUFvNENxR1czMTRoUUpJZzVPYU5UREtmWGlRQVRKY085TnRTcXRCUmwxbjJQQitZeUp5ClgzbXEyZ1pvZk5qZmFnSS9ZdmVkeUM3VmtPdHMyM20zT3FoQ0kwb2dTdUczcTk5d3FEZlp5UlJpTEdwZkNMQm0KL2wzQU9lbCtwRzNHTk91WG94VGEyNE0wT3NPdk1XOTVoZjBuRlFJREFRQUJBb0lCQUI2VFFBK0YyUk54Y28ybAp5K005b2JITUNpa0pUWUNMTHZmcnFCVkpDV2ZlYUhkbWo0cno0bEg1NTVnb2syWGJDOEpGZUoxdzNPMFZDSlpZCjF0NEtidkkrRDh4Q0ZIVno2c0lYKzZyTENINm1lU3JlOWJ2VXJjNmJ6UTlCK0pMRVJEekNpSDNnVUU3bjI4eUYKajJhUE42c1plMEU1WUJOazVNN1k3L0VzRlVHNnRGVGFpWkNVZmFkdC9sUUUxQjdydFIvMWJTRStha2U3NnErQgo2cmZZVlJRbEdLNFdaNStXNFdrN3haVjFVY1FuZU4xNW1zejdqWml5TFJQVHJFY25vdkwxVGE5aUREL01xdk9PClJYTmFhbExxTHhkUzJrS3hIRmc3cHpUQ3p1SHhWNTh6V2ZvR2FWaVNMNmlRODdxVjdQY0tnRTJ6aFVac1dKS0kKUmhKUnMzMENnWUVBK25IcnNYcjcrT05wR2NuRkVxeXBzYmRGblJrWFJRNjFvN01nb1EzMlVBeURRcjB5WDUvMApicmFQYndwdWVpcG0rdHN2NTd6Q3ZmdDVOS05mbEI0T2RZd1dGWUlEWmlqb3h4WHBQbUNhM0ZaSzl5QTBXY0JsCmxaQjNvKzd6bUkwbUNTemt1T0dOT1cxOXZJK014RnpsOEtGbFdVS1hBRVpLQnZ2RmQzY2JQS2NDZ1lFQTBobEQKYzVHNlBUc1UxVTF3a0pSbE5YRWxEMUZHR1VCcEdQL281WjlxUHQrQkl0b3pKYWJwdFVsUlpRUTJ5ekR2QVRWZwpZRXBlb0lCWEFudDVCMTV3NGxMUlBCckw4TU04bE9oVFZ6bEZlQ1d2eDRXajVmUTE1WFRDdUQ1di9wRW83cXdjCkcydFlhRjFiY2ZpMmtKTCs5OVUrTUd6V2w2TFJ3YWhyb0hhM2llTUNnWUF4TFkrUG9VdTdPc1NYbU1SRy8zcXUKK0FNR2J6ZmZpcHptVVRWV0NzelVPVERKT1NlY0dXZkJHYjRlbXRqSXltekFVNndiZ0RocFgra1VDZ1NwckNGQQp1Y3BZWE5oWUJpNTNjWGtFazZtMUhJako4QnYzaDgwcXlseUQ1MWNVSEp0Y2IrRlY0SXgvdTExV1dvWFV4VDB0CnZET1BqSURrUCtrblorY0ZwM0RFdndLQmdRQzEyalF1RmxjVHBNMzFpdUFCNU5CdG40K3FZSGpDWnFRUmhZQjcKTUs3djJObVg1eklhUncxSFl6eldxUDBjaHpCNDVWQ1VTQXI3OWRwYVJiR09sVW8wTyticmxXNHM2WERJbXdkNApHaFJ0V0lGN3U4c1B3WC9kS21GWXhJSi8zL21FRE9rUE9xejlPTUZzTnhFZXRuMkcyc2JIZDQyUEZ0bGtQSGxjCkhTWGtiUUtCZ0JJQTBTSEJLUU9RQ3ZUV3RFcjZWV2NtQ0Q2eE0vS0t4OHNUc3BQakNQNXNoNEQ5ZFIvbkJUUFkKRzVkbml2VGJtQjBVVE53enQrMEpUQitTcjBPSy91c1pMOEpIVHVxRlNET1diRTFvU1B1M3I1Q1RLM0NOY3E0Ugp2RjVXVXo1akdKbUl2K09FeSsvOVk5R21lMXBlL2xpSGg0Rm1zdEdNTEdyRTZHSmhWZWZ2Ci0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==

@@ -1,6 +1,6 @@
 # HW3
 
-## 题目
+## 题目-第一部分
 
 ```
 1. 第一部分
@@ -158,3 +158,104 @@ Events:
 ```shell
 make delete
 ```
+
+## 题目-第二部分
+```
+模块八作业第二部分
+除了将 httpServer 应用优雅的运行在 Kubernetes 之上，我们还应该考虑如何将服务发布给对内和对外的调用方。
+来尝试用 Service, Ingress 将你的服务发布给集群外部的调用方吧。
+在第一部分的基础上提供更加完备的部署 spec，包括（不限于）：
+
+Service
+Ingress
+可以考虑的细节
+
+如何确保整个应用的高可用。
+如何通过证书保证 httpServer 的通讯安全。
+```
+
+## 修改
+### 内容
+- 优化代码结构 
+- Service 
+- Ingress 
+- 高可用
+- 通过证书保证httpServer的通讯安全
+
+## 执行
+### 生成证书和key
+1. 生成TLS证书
+```shell
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./cert/ca.key -out ./cert/ca.crt -subj "/CN=naturegong.com/O=naturegong.com"
+```
+输出
+```shell
+Generating a 2048 bit RSA private key
+.................+++
+......................................................+++
+writing new private key to 'ca.key'
+-----
+```
+2. 创建集群的secret
+```shell
+kubectl create secret tls http-server-tls-secret --key ./cert/ca.key --cert ./cert/ca.crt
+```
+输出：
+```shell
+secret/http-server-tls-secret created
+```
+3. 查看新建TLS证书配置：
+```shell
+kubectl get secret
+```
+输出：
+```shell
+NAME                     TYPE                DATA   AGE
+http-server-tls-secret   kubernetes.io/tls   2      23m
+```
+
+### 在ingress.yaml中增加生成Secret配置，用于配置访问证书
+详细见`/deploy/k8s/ingress.yaml`
+
+### 在ingress.yaml中增加生成Ingress配置
+详细见`/deploy/k8s/ingress.yaml`
+
+### 修改Service中的NodePort为ClusterIP
+详细见`/deploy/k8s/ingress.yaml`
+```shell
+NAME                  TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)    AGE
+http-server-service   ClusterIP   10.96.116.52   <none>        8080/TCP   5s
+```
+### 修改本机/etc/hosts文件
+```shell
+127.0.0.1 naturegong.com
+```
+
+### 测试通过域名进行访问服务
+```shell
+ curl -k https://naturegong.com/healthz
+```
+结果：
+![img.png](img/img.png)
+
+### 把所有k8s操作放在一个workload.yaml中，并修改Makefile
+详细见`/deploy/k8s/workload.yaml`和`Makefile`
+
+创建所有配置：
+```shell
+make deployment-hpa
+```
+
+删除所有配置：
+```shell
+make delete-hpa
+```
+
+结果：
+![img.png](img/img2.png)
+
+
+
+
+
+

@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	"hw1/internal/logger"
+	"hw3/internal/logger"
 )
 
 var C = new(Config)

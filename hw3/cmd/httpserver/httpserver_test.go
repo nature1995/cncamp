@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"hw1/internal/logger"
+	"hw3/internal/logger"
 )
 
 func init() {
