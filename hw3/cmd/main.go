@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"time"
 
-	"hw1/cmd/httpserver"
-	"hw1/internal/config"
-	"hw1/internal/logger"
+	"hw3/cmd/httpserver"
+	"hw3/internal/config"
+	"hw3/internal/logger"
 )
 
 func main() {

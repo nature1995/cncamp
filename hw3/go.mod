@@ -1,4 +1,4 @@
-module hw1
+module hw3
 
 go 1.16
 
