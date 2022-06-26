@@ -1,4 +1,4 @@
-VERSION = 1.2.0
+VERSION = 1.4.0
 APP_NAME=http_server
 DOCKER_REPO_ACCOUNT=naturegong
 
@@ -22,6 +22,11 @@ run: dep
 image:
 	@echo ">> build image"
 	@docker build -t $(DOCKER_REPO_ACCOUNT)/$(APP_NAME):$(VERSION) -t $(DOCKER_REPO_ACCOUNT)/$(APP_NAME):latest --platform linux/amd64 -f ./Dockerfile .
+
+push-no-build:
+	@echo ">> push image to docker hub"
+	@docker push $(DOCKER_REPO_ACCOUNT)/$(APP_NAME):$(VERSION)
+	@docker push $(DOCKER_REPO_ACCOUNT)/$(APP_NAME):latest
 
 push: image
 	@echo ">> push image to docker hub"
