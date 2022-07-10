@@ -1,0 +1,57 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: http-server
+spec:
+  gateways:
+    - http-server
+  hosts:
+    - http-server.naturegong.com
+  http:
+    - match:
+        - port: 443
+      route:
+        - destination:
+            host: http-server-service.default.svc.cluster.local
+            port:
+              number: 8080
+    - match:
+        - uri:
+            prefix: /health
+      rewrite:
+        uri: "/healthz"
+      route:
+        - destination:
+            host: http-server-service.default.svc.cluster.local
+            port:
+              number: 8080
+    - match:
+        - uri:
+            prefix: /hello-world
+      rewrite:
+        uri: "/hello"
+      route:
+        - destination:
+            host: http-server-service.default.svc.cluster.local
+            port:
+              number: 8080
+
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: http-server
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - hosts:
+        - http-server.naturegong.com
+      port:
+        name: port-https
+        number: 443
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: naturegong-credential

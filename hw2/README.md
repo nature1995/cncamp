@@ -26,7 +26,7 @@ docker image ls | grep http_server
 ```shell
 make push
 ```
-![img.png](../img/img.png)
+![img.png](./img/img.png)
 
 ### 4.启动容器
 ```shell

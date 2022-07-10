@@ -1,0 +1,5 @@
+Env: dev
+Http: 8080
+Log:
+  Path: ./logs
+  Level: DEBUG
