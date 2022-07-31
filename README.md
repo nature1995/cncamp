@@ -8,3 +8,4 @@
 - [hw3-2 - K8s](hw3/README.md)
 - [hw4 - K8s prometheus](hw4/README.md)
 - [hw5 - Istio](hw5/README.md)
+- [hw6 - summary](hw6/README.md)
